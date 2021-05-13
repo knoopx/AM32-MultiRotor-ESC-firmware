@@ -738,10 +738,10 @@ void tenKhzRoutine()
                 }
                 running = 1;
                 last_duty_cycle = min_startup_duty;
-#ifdef tmotor55
-                GPIOB->BRR = LL_GPIO_PIN_3; // off red
-                GPIOA->BRR = LL_GPIO_PIN_15; // off green
-                GPIOB->BSRR = LL_GPIO_PIN_5; // on blue
+#ifdef USE_LED
+                GPIOB->BRR = PIN_LED_RED; // off red
+                GPIOA->BRR = PIN_LED_GREEN; // off green
+                GPIOB->BSRR = PIN_LED_BLUE; // on blue
 #endif
             }
             //	  coasting = 0;
@@ -1061,9 +1061,9 @@ int main(void)
     LL_TIM_EnableCounter(IC_TIMER_REGISTER);
 #endif
 
-#ifdef tmotor55
+#ifdef USE_LED
     LED_GPIO_init();
-    GPIOB->BSRR = LL_GPIO_PIN_3; // turn on red
+    GPIOB->BSRR = PIN_LED_RED; // turn on red
 #endif
 
     LL_TIM_EnableCounter(TIM14); // commutation_timer priority 0
@@ -1204,9 +1204,9 @@ int main(void)
         LL_IWDG_ReloadCounter(IWDG);
         if (zero_input_count > armed_count_threshold && !armed) {
             armed = 1;
-#ifdef tmotor55
-            GPIOB->BRR = LL_GPIO_PIN_3; // turn off red
-            GPIOA->BSRR = LL_GPIO_PIN_15; // turn on green
+#ifdef USE_LED
+            GPIOB->BRR = PIN_LED_RED; // turn off red
+            GPIOA->BSRR = PIN_LED_GREEN; // turn on green
 #endif
             if (cell_count == 0 && LOW_VOLTAGE_CUTOFF) {
                 cell_count = battery_voltage / 370;
@@ -1363,11 +1363,11 @@ int main(void)
 
             if ((zero_crosses > 1000) || (adjusted_input == 0)) {
                 bemf_timout_happened = 0;
-#ifdef tmotor55
+#ifdef USE_LED
                 if (adjusted_input == 0 && armed) {
-                    GPIOA->BSRR = LL_GPIO_PIN_15; // on green
-                    GPIOB->BRR = LL_GPIO_PIN_5; // off blue
-                    GPIOB->BRR = LL_GPIO_PIN_3; //off red
+                    GPIOA->BSRR = PIN_LED_GREEN; // on green
+                    GPIOB->BRR = PIN_LED_BLUE; // off blue
+                    GPIOB->BRR = PIN_LED_RED; //off red
                 }
 #endif
             }
@@ -1394,10 +1394,10 @@ int main(void)
                 maskPhaseInterrupts();
                 input = 0;
                 bemf_timout_happened = 102;
-#ifdef tmotor55
-                GPIOA->BRR = LL_GPIO_PIN_15; // off green
-                GPIOB->BRR = LL_GPIO_PIN_5; // off blue
-                GPIOB->BSRR = LL_GPIO_PIN_3;
+#ifdef USE_LED
+                GPIOA->BRR = PIN_LED_GREEN; // off green
+                GPIOB->BRR = PIN_LED_BLUE; // off blue
+                GPIOB->BSRR = PIN_LED_RED; // on red
 #endif
             } else {
                 input = adjusted_input;

@@ -150,6 +150,11 @@
 #define PHASE_B_COMP COMP_PA4
 #define PHASE_C_COMP COMP_PA5
 
+#define USE_LED
+#define PIN_LED_RED LL_GPIO_PIN_3
+#define PIN_LED_GREEN LL_GPIO_PIN_15
+#define PIN_LED_BLUE LL_GPIO_PIN_5
+
 #endif
 
 #ifdef TMOTOR45

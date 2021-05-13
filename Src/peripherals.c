@@ -422,7 +422,7 @@ void UN_TIM_Init(void)
     LL_TIM_IC_SetPolarity(IC_TIMER_REGISTER, IC_TIMER_CHANNEL, LL_TIM_IC_POLARITY_BOTHEDGE);
 }
 
-#ifdef tmotor55 // has 3 color led
+#ifdef USE_LED // has 3 color led
 void LED_GPIO_init()
 {
     LL_GPIO_InitTypeDef GPIO_InitStruct = { 0 };
@@ -432,25 +432,25 @@ void LED_GPIO_init()
     LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOA);
     LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOB);
 
-    LL_GPIO_ResetOutputPin(GPIOA, LL_GPIO_PIN_15);
-    LL_GPIO_ResetOutputPin(GPIOB, LL_GPIO_PIN_5);
-    LL_GPIO_ResetOutputPin(GPIOB, LL_GPIO_PIN_3);
+    LL_GPIO_ResetOutputPin(GPIOA, PIN_LED_GREEN);
+    LL_GPIO_ResetOutputPin(GPIOB, PIN_LED_BLUE);
+    LL_GPIO_ResetOutputPin(GPIOB, PIN_LED_RED);
 
-    GPIO_InitStruct.Pin = LL_GPIO_PIN_15;
+    GPIO_InitStruct.Pin = PIN_LED_GREEN;
     GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
     GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
     GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
     GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
     LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-    GPIO_InitStruct.Pin = LL_GPIO_PIN_5;
+    GPIO_InitStruct.Pin = PIN_LED_BLUE;
     GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
     GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
     GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
     GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
     LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-    GPIO_InitStruct.Pin = LL_GPIO_PIN_3;
+    GPIO_InitStruct.Pin = PIN_LED_RED;
     GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
     GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
     GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
