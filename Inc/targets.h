@@ -12,6 +12,7 @@
 //GLOBAL
 //#define USE_ADC_INPUT
 //#define BRUSHED_MODE // overrides everything else
+//#define GIMBAL_MODE // also sinusoidal_startup needs to be on.
 
 #ifdef FD6288
 
