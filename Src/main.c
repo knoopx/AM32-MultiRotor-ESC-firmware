@@ -118,7 +118,6 @@ firmware_info_s __attribute__((section(".firmware_info"))) firmware_info = {
     device_name : FIRMWARE_NAME
 };
 
-char BRUSHED_MODE = 0; // overrides everything else
 char RC_CAR_REVERSE = 0; // have to set bidirectional, comp_pwm off and stall protection off, no sinusoidal startup
 char GIMBAL_MODE = 0; // also sinusoidal_startup needs to be on.
 
@@ -729,8 +728,8 @@ void tenKhzRoutine()
             send_telemetry = 1;
         }
     }
-
-    if (!stepper_sine && !BRUSHED_MODE) {
+#ifndef BRUSHED_MODE
+    if (!stepper_sine) {
         if (input >= 47 + (80 * use_sin_start) && armed) {
             if (running == 0) {
                 if (!old_routine) {
@@ -876,6 +875,8 @@ void tenKhzRoutine()
         TIM1->CCR2 = adjusted_duty_cycle;
         TIM1->CCR3 = adjusted_duty_cycle;
     }
+
+#endif
     average_interval = e_com_time / 3;
     if (desync_check) {
         //	if(average_interval < last_average_interval){
@@ -1134,16 +1135,14 @@ int main(void)
         min_startup_duty = 180;
     }
 
-    if (BRUSHED_MODE) {
-        bi_direction = 1;
-        commutation_interval = 5000;
-    }
+#ifdef BRUSHED_MODE
+    bi_direction = 1;
+    commutation_interval = 5000;
+    playBrushedStartupTune();
+#else
+    playStartupTune();
+#endif
 
-    if (BRUSHED_MODE) {
-        playBrushedStartupTune();
-    } else {
-        playStartupTune();
-    }
     if (GIMBAL_MODE) {
         bi_direction = 1;
         use_sin_start = 1;
@@ -1330,207 +1329,207 @@ int main(void)
         } else {
             adjusted_input = newinput;
         }
-        if (BRUSHED_MODE) {
-            if (brushed_direction_set == 0 && adjusted_input > 48) {
-                if (forward) {
-                    allOff();
-                    delayMicros(10);
-                    comStep(6);
-                } else {
-                    allOff();
-                    delayMicros(10);
-                    comStep(3);
-                }
-                brushed_direction_set = 1;
-            }
-            if (adjusted_input > 1900) {
-                adjusted_input = 1900;
-            }
-            input = map(adjusted_input, 48, 2047, 0, TIMER1_MAX_ARR);
-
-            if (input > 0 && armed) {
-                TIM1->CCR1 = input; // set duty cycle to 50 out of 768 to start.
-                TIM1->CCR2 = input;
-                TIM1->CCR3 = input;
-            } else {
-                TIM1->CCR1 = 0; // set duty cycle to 50 out of 768 to start.
-                TIM1->CCR2 = 0;
-                TIM1->CCR3 = 0;
-                //	fullBrake();
-            }
-
-        } else {
-
-            if ((zero_crosses > 1000) || (adjusted_input == 0)) {
-                bemf_timout_happened = 0;
-#ifdef USE_LED
-                if (adjusted_input == 0 && armed) {
-                    GPIOA->BSRR = PIN_LED_GREEN; // on green
-                    GPIOB->BRR = PIN_LED_BLUE; // off blue
-                    GPIOB->BRR = PIN_LED_RED; //off red
-                }
-#endif
-            }
-            if (zero_crosses > 100 && adjusted_input < 200) {
-                bemf_timout_happened = 0;
-            }
-            if (use_sin_start && adjusted_input < 160) {
-                bemf_timout_happened = 0;
-            }
-
-            if (crawler_mode) {
-                if (adjusted_input < 400) {
-                    bemf_timout_happened = 0;
-                }
-            } else {
-                if (adjusted_input < 150) { // startup duty cycle should be low enough to not burn motor
-                    bemf_timeout = 100;
-                } else {
-                    bemf_timeout = 10;
-                }
-            }
-            if (bemf_timout_happened > bemf_timeout * (1 + (crawler_mode * 100)) && stuck_rotor_protection) {
+#ifdef BRUSHED_MODE
+        if (brushed_direction_set == 0 && adjusted_input > 48) {
+            if (forward) {
                 allOff();
-                maskPhaseInterrupts();
-                input = 0;
-                bemf_timout_happened = 102;
-#ifdef USE_LED
-                GPIOA->BRR = PIN_LED_GREEN; // off green
-                GPIOB->BRR = PIN_LED_BLUE; // off blue
-                GPIOB->BSRR = PIN_LED_RED; // on red
-#endif
+                delayMicros(10);
+                comStep(6);
             } else {
-                input = adjusted_input;
+                allOff();
+                delayMicros(10);
+                comStep(3);
+            }
+            brushed_direction_set = 1;
+        }
+        if (adjusted_input > 1900) {
+            adjusted_input = 1900;
+        }
+        input = map(adjusted_input, 48, 2047, 0, TIMER1_MAX_ARR);
+
+        if (input > 0 && armed) {
+            TIM1->CCR1 = input; // set duty cycle to 50 out of 768 to start.
+            TIM1->CCR2 = input;
+            TIM1->CCR3 = input;
+        } else {
+            TIM1->CCR1 = 0; // set duty cycle to 50 out of 768 to start.
+            TIM1->CCR2 = 0;
+            TIM1->CCR3 = 0;
+            //	fullBrake();
+        }
+
+#else
+
+        if ((zero_crosses > 1000) || (adjusted_input == 0)) {
+            bemf_timout_happened = 0;
+#ifdef USE_LED
+            if (adjusted_input == 0 && armed) {
+                GPIOA->BSRR = PIN_LED_GREEN; // on green
+                GPIOB->BRR = PIN_LED_BLUE; // off blue
+                GPIOB->BRR = PIN_LED_RED; //off red
+            }
+#endif
+        }
+        if (zero_crosses > 100 && adjusted_input < 200) {
+            bemf_timout_happened = 0;
+        }
+        if (use_sin_start && adjusted_input < 160) {
+            bemf_timout_happened = 0;
+        }
+
+        if (crawler_mode) {
+            if (adjusted_input < 400) {
+                bemf_timout_happened = 0;
+            }
+        } else {
+            if (adjusted_input < 150) { // startup duty cycle should be low enough to not burn motor
+                bemf_timeout = 100;
+            } else {
+                bemf_timeout = 10;
+            }
+        }
+        if (bemf_timout_happened > bemf_timeout * (1 + (crawler_mode * 100)) && stuck_rotor_protection) {
+            allOff();
+            maskPhaseInterrupts();
+            input = 0;
+            bemf_timout_happened = 102;
+#ifdef USE_LED
+            GPIOA->BRR = PIN_LED_GREEN; // off green
+            GPIOB->BRR = PIN_LED_BLUE; // off blue
+            GPIOB->BSRR = PIN_LED_RED; // on red
+#endif
+        } else {
+            input = adjusted_input;
+        }
+
+        if (stepper_sine == 0) {
+
+            k_erpm = running * ((1000000 / e_com_time) * 60) / 1000; // ecom time is time for one electrical revolution in microseconds
+            if (low_rpm_throttle_limit) { // some hardware doesn't need this, its on by default to keep hardware / motors protected but can slow down the response in the very low end a little.
+
+                duty_cycle_maximum = map(k_erpm, low_rpm_level, high_rpm_level, throttle_max_at_low_rpm, throttle_max_at_high_rpm); // for more performance lower the high_rpm_level, set to a consvervative number in source.
             }
 
-            if (stepper_sine == 0) {
+            if (zero_crosses < 100 || commutation_interval > 500) {
 
-                k_erpm = running * ((1000000 / e_com_time) * 60) / 1000; // ecom time is time for one electrical revolution in microseconds
-                if (low_rpm_throttle_limit) { // some hardware doesn't need this, its on by default to keep hardware / motors protected but can slow down the response in the very low end a little.
+                filter_level = 12;
 
-                    duty_cycle_maximum = map(k_erpm, low_rpm_level, high_rpm_level, throttle_max_at_low_rpm, throttle_max_at_high_rpm); // for more performance lower the high_rpm_level, set to a consvervative number in source.
-                }
+            } else {
 
-                if (zero_crosses < 100 || commutation_interval > 500) {
+                filter_level = map(average_interval, 100, 500, 3, 8);
+            }
+            if (commutation_interval < 100) {
+                filter_level = 2;
+            }
 
-                    filter_level = 12;
+            //	if (duty_cycle > 800 && zero_crosses > 100 && commutation_interval < 400){
+            //		filter_level = 3;
+            ////		filter_delay = 0;
+            //	}
+            //
+            //	if (commutation_interval < 90 && duty_cycle > 800){
+            //		filter_level = 2;
+            //	//	filter_delay = 0;
+            //	}
 
-                } else {
+            if (lowkv) {
 
-                    filter_level = map(average_interval, 100, 500, 3, 8);
-                }
-                if (commutation_interval < 100) {
-                    filter_level = 2;
-                }
+                filter_level = low_kv_filter_level;
+            }
 
-                //	if (duty_cycle > 800 && zero_crosses > 100 && commutation_interval < 400){
-                //		filter_level = 3;
-                ////		filter_delay = 0;
-                //	}
-                //
-                //	if (commutation_interval < 90 && duty_cycle > 800){
-                //		filter_level = 2;
-                //	//	filter_delay = 0;
-                //	}
-
-                if (lowkv) {
-
-                    filter_level = low_kv_filter_level;
-                }
-
-                /**************** old routine*********************/
-                if (old_routine && running) {
-                    maskPhaseInterrupts();
-                    getBemfState();
-                    if (!zcfound) {
-                        if (rising) {
-                            if (bemfcounter > min_bemf_counts_up) {
-                                zcfound = 1;
-                                zcfoundroutine();
-                            }
-                        } else {
-                            if (bemfcounter > min_bemf_counts_down) {
-                                zcfound = 1;
-                                zcfoundroutine();
-                            }
+            /**************** old routine*********************/
+            if (old_routine && running) {
+                maskPhaseInterrupts();
+                getBemfState();
+                if (!zcfound) {
+                    if (rising) {
+                        if (bemfcounter > min_bemf_counts_up) {
+                            zcfound = 1;
+                            zcfoundroutine();
+                        }
+                    } else {
+                        if (bemfcounter > min_bemf_counts_down) {
+                            zcfound = 1;
+                            zcfoundroutine();
                         }
                     }
                 }
-                if (TIM2->CNT > 40000 && running == 1) {
-                    bemf_timout_happened++;
-                    zcfoundroutine();
-                    maskPhaseInterrupts();
-                    old_routine = 1;
-                    running = 0;
-                    zero_crosses = 0;
-                    if (crawler_mode && stall_protection) {
-                        min_startup_duty = 120;
-                    }
-                }
-            } else { // stepper sine
-
-                if (GIMBAL_MODE) {
-                    step_delay = 300;
-                    maskPhaseInterrupts();
-                    allpwm();
-                    if (newinput > 1000) {
-                        desired_angle = map(newinput, 1000, 2000, 180, 360);
-                    } else {
-                        desired_angle = map(newinput, 0, 1000, 0, 180);
-                    }
-                    if (current_angle > desired_angle) {
-                        forward = 1;
-                        advanceincrement();
-                        delayMicros(step_delay);
-                        current_angle--;
-                    }
-                    if (current_angle < desired_angle) {
-                        forward = 0;
-                        advanceincrement();
-                        delayMicros(step_delay);
-                        current_angle++;
-                    }
-                } else {
-
-                    if (input > 48 && armed) {
-
-                        if (input > 48 && input < 137) { // sine wave stepper
-                            //			 LL_TIM_DisableIT_UPDATE(TIM1);
-                            maskPhaseInterrupts();
-                            allpwm();
-                            advanceincrement();
-                            step_delay = map(input, 48, 137, 7000 / motor_poles, 840 / motor_poles);
-                            delayMicros(step_delay);
-
-                        } else {
-                            advanceincrement();
-                            if (input > 200) {
-                                phase_A_position = 0;
-                                step_delay = 80;
-                            }
-
-                            delayMicros(step_delay);
-                            if (phase_A_position == 0) {
-                                stepper_sine = 0;
-                                running = 1;
-                                old_routine = 1;
-                                zero_crosses = 0;
-                                step = changeover_step; // rising bemf on a same as position 0.
-                                //			 LL_TIM_EnableIT_UPDATE(TIM1);
-                                LL_TIM_GenerateEvent_UPDATE(TIM1);
-                                zcfoundroutine();
-                            }
-                        }
-
-                    } else {
-                        TIM1->CCR1 = 0; // set duty cycle to 50 out of 768 to start.
-                        TIM1->CCR2 = 0;
-                        TIM1->CCR3 = 0;
-                        fullBrake();
-                    }
+            }
+            if (TIM2->CNT > 40000 && running == 1) {
+                bemf_timout_happened++;
+                zcfoundroutine();
+                maskPhaseInterrupts();
+                old_routine = 1;
+                running = 0;
+                zero_crosses = 0;
+                if (crawler_mode && stall_protection) {
+                    min_startup_duty = 120;
                 }
             }
-        } // end of brushed mode override
+        } else { // stepper sine
+
+            if (GIMBAL_MODE) {
+                step_delay = 300;
+                maskPhaseInterrupts();
+                allpwm();
+                if (newinput > 1000) {
+                    desired_angle = map(newinput, 1000, 2000, 180, 360);
+                } else {
+                    desired_angle = map(newinput, 0, 1000, 0, 180);
+                }
+                if (current_angle > desired_angle) {
+                    forward = 1;
+                    advanceincrement();
+                    delayMicros(step_delay);
+                    current_angle--;
+                }
+                if (current_angle < desired_angle) {
+                    forward = 0;
+                    advanceincrement();
+                    delayMicros(step_delay);
+                    current_angle++;
+                }
+            } else {
+
+                if (input > 48 && armed) {
+
+                    if (input > 48 && input < 137) { // sine wave stepper
+                        //			 LL_TIM_DisableIT_UPDATE(TIM1);
+                        maskPhaseInterrupts();
+                        allpwm();
+                        advanceincrement();
+                        step_delay = map(input, 48, 137, 7000 / motor_poles, 840 / motor_poles);
+                        delayMicros(step_delay);
+
+                    } else {
+                        advanceincrement();
+                        if (input > 200) {
+                            phase_A_position = 0;
+                            step_delay = 80;
+                        }
+
+                        delayMicros(step_delay);
+                        if (phase_A_position == 0) {
+                            stepper_sine = 0;
+                            running = 1;
+                            old_routine = 1;
+                            zero_crosses = 0;
+                            step = changeover_step; // rising bemf on a same as position 0.
+                            //			 LL_TIM_EnableIT_UPDATE(TIM1);
+                            LL_TIM_GenerateEvent_UPDATE(TIM1);
+                            zcfoundroutine();
+                        }
+                    }
+
+                } else {
+                    TIM1->CCR1 = 0; // set duty cycle to 50 out of 768 to start.
+                    TIM1->CCR2 = 0;
+                    TIM1->CCR3 = 0;
+                    fullBrake();
+                }
+            }
+        }
+#endif
     }
 }
 

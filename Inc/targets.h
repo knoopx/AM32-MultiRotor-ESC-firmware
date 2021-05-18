@@ -11,6 +11,7 @@
 
 //GLOBAL
 //#define USE_ADC_INPUT
+//#define BRUSHED_MODE // overrides everything else
 
 #ifdef FD6288
 
