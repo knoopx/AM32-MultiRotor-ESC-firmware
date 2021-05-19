@@ -2,7 +2,7 @@ CC = $(ARM_SDK_PREFIX)gcc
 CP = $(ARM_SDK_PREFIX)objcopy
 MCU := -mcpu=cortex-m0 -mthumb
 LDSCRIPT := STM32F051K6TX_FLASH.ld
-LIBS := -lc -lm -lnosys 
+LIBS := -lc -lm -lnosys
 LDFLAGS := -specs=nano.specs -T$(LDSCRIPT) $(LIBS) -Wl,--gc-sections -Wl,--print-memory-usage
 MAIN_SRC_DIR := Src
 SRC_DIR := Startup \
@@ -13,7 +13,7 @@ INCLUDES :=  \
 	-IInc \
 	-IDrivers/STM32F0xx_HAL_Driver/Inc \
 	-IDrivers/CMSIS/Include \
-	-IDrivers/CMSIS/Device/ST/STM32F0xx/Include 
+	-IDrivers/CMSIS/Device/ST/STM32F0xx/Include
 VALUES :=  \
 	-DUSE_MAKE \
 	-DHSE_VALUE=8000000 \
@@ -37,8 +37,8 @@ TARGETS := FD6288 MP6531 IFLIGHT TMOTOR55 TMOTOR45 HGLRC SISKIN DIATONE MAMBA_F4
 # Working directories
 ROOT := $(patsubst %/,%,$(dir $(lastword $(MAKEFILE_LIST))))
 
-VERSION_MAJOR := $(shell grep " VERSION_MAJOR" Src/main.c | awk '{print $$3}' )
-VERSION_MINOR := $(shell grep " VERSION_MINOR" Src/main.c | awk '{print $$3}' )
+VERSION_MAJOR := $(shell grep "\#define VERSION_MAJOR" Src/main.c | awk '{print $$3}' )
+VERSION_MINOR := $(shell grep "\#define VERSION_MINOR" Src/main.c | awk '{print $$3}' )
 
 FIRMWARE_VERSION := $(VERSION_MAJOR).$(VERSION_MINOR)
 

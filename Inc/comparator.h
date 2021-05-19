@@ -18,6 +18,5 @@
 void maskPhaseInterrupts();
 void changeCompInput();
 
-
 extern char rising;
 extern char step;

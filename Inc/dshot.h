@@ -10,10 +10,6 @@
 #ifndef INC_DSHOT_H_
 #define INC_DSHOT_H_
 
-
-
-
-
 void computeDshotDMA(void);
 void make_dshot_package();
 
@@ -44,6 +40,5 @@ extern uint16_t commutation_interval;
 extern uint16_t process_time;
 
 //int e_com_time;
-
 
 #endif /* INC_DSHOT_H_ */
